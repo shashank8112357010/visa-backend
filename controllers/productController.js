@@ -1,393 +1,348 @@
-const { Product, Category, Subcategory } = require('../models/productModel');
-const path = require("path")
-const fs = require("fs")
-require("dotenv").config()
+const Product = require('../models/Product')
+const { productSchema } = require('../validation/validation')
+const Subcategory = require('../models/SubCategory')
 
-// Create a new category (Admin only)
-const createCategory = async (req, res) => {
-  const { name } = req.body;
-  const image = req.file && req.file.mimetype.includes('image') 
-  ? `${process.env.BACKEND_URL}/${req.file.path}` 
-  : null; // Null if no valid image
-  try {
-    const newCategory = new Category({ name , image });
-    await newCategory.save();
-    res.status(201).json({ message: 'Category created successfully', category: newCategory });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+const fs = require('fs')
+const path = require('path')
+// POST: Admin can add products with multiple image uploads
+exports.createProduct = async (req, res) => {
+  // Parse and normalize incoming data
+  const parsedData = {
+    ...req.body,
+    sizes: Array.isArray(req.body.sizes)
+      ? req.body.sizes.filter((size) => size)
+      : [req.body.sizes].filter((size) => size),
+    colors: Array.isArray(req.body.colors)
+      ? req.body.colors.filter((color) => color)
+      : [req.body.colors].filter((color) => color)
   }
-};
 
-// Create a new subcategory (Admin only)
-const createSubcategory = async (req, res) => {
-  const { name, categoryId } = req.body;
-  
-  const image = req.file && req.file.mimetype.includes('image') 
-  ? `${process.env.BACKEND_URL}/${req.file.path}` 
-  : null; // Null if no valid image
+  delete parsedData.images
+
+  const { error } = productSchema.validate(parsedData)
+  if (error) {
+    // Remove uploaded files in case of validation error
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => fs.unlinkSync(file.path))
+    }
+    return res.status(400).json({ message: error.details[0].message })
+  }
 
   try {
-    const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found' });
+    // Prepare product data for saving
+    const productData = {
+      ...parsedData,
+      images: req.files
+        ? req.files
+            .map(
+              (file) => `${process.env.BACKEND_URL}/uploads/${file.filename}`
+            )
+            .filter((image) => image) // Filter out any falsy values
+        : []
     }
 
-    const newSubcategory = new Subcategory({ name, category: categoryId , image });
-    await newSubcategory.save();
-    res.status(201).json({ message: 'Subcategory created successfully', subcategory: newSubcategory });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+    const product = new Product(productData)
+    await product.save()
 
-const deleteCategory = async (req, res) => {
-  const { categoryId } = req.params;
-
-  try {
-    const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ message: 'Category not found' });
+    res.status(201).json({ message: 'Product added successfully', product })
+  } catch (err) {
+    // Remove uploaded files in case of server error
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => fs.unlinkSync(file.path))
     }
-
-    const subcategories = await Subcategory.find({ category: categoryId });
-    const subcategoryIds = subcategories.map(sub => sub._id);
-
-    const products = await Product.find({
-      $or: [
-        { category: categoryId },
-        { subcategory: { $in: subcategoryIds } },
-      ],
-    });
-
-    // Delete associated product images
-    products.forEach(product => {
-      product.images.forEach(imageUrl => {
-        const filePath = imageUrl.replace(`${process.env.BACKEND_URL}/`, '');
-        const absolutePath = path.resolve(filePath);
-        if (fs.existsSync(absolutePath)) {
-          fs.unlinkSync(absolutePath);
-        }
-      });
-    });
-
-    await Subcategory.deleteMany({ category: categoryId });
-    await Product.deleteMany({
-      $or: [
-        { category: categoryId },
-        { subcategory: { $in: subcategoryIds } },
-      ],
-    });
-    await Category.findByIdAndDelete(categoryId);
-
-    res.status(200).json({
-      message: 'Category, associated subcategories, products, and images deleted successfully',
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
+exports.editProduct = async (req, res) => {
+  const { id } = req.params // Product ID from URL params
+  console.log(req.body, 'req.body', id)
 
-const deleteSubcategory = async (req, res) => {
-  const { subcategoryId } = req.params;
+  const updatedData = { ...req.body }
+  const { existingImages } = req.body
 
   try {
-    const subcategory = await Subcategory.findById(subcategoryId);
-
-    if (!subcategory) {
-      return res.status(404).json({ message: 'Subcategory not found' });
-    }
-
-    const products = await Product.find({ subcategory: subcategoryId });
-
-    // Delete associated product images
-    products.forEach(product => {
-      product.images.forEach(imageUrl => {
-        const filePath = imageUrl.replace(`${process.env.BACKEND_URL}/`, '');
-        const absolutePath = path.resolve(filePath);
-        if (fs.existsSync(absolutePath)) {
-          fs.unlinkSync(absolutePath);
-        }
-      });
-    });
-
-    await Product.deleteMany({ subcategory: subcategoryId });
-    await Subcategory.findByIdAndDelete(subcategoryId);
-
-    res.status(200).json({
-      message: 'Subcategory, associated products, and images deleted successfully',
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
-  }
-};
-
-
-const getAllCategoriesWithSubcategories = async (req, res) => {
-  try {
-    // Fetch all categories and populate their related subcategories
-    const categories = await Category.find().lean(); // Use `lean()` for better performance
-
-    const categoryData = await Promise.all(
-      categories.map(async (category) => {
-        // Fetch subcategories for each category
-        const subcategories = await Subcategory.find({ category: category._id });
-        return {
-          _id: category._id,
-          name: category.name,
-          image: category.image,
-          subcategories: subcategories
-        };
-      })
-    );
-
-    res.status(200).json({ categories: categoryData });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
-  }
-};
-
-
-const getAllCategories = async (req, res) => {
-  try {
-    // Fetch all categories and populate their related subcategories
-    const categories = await Category.find({} , "_id name image").lean(); // Use `lean()` for better performance
-
-    // const categoryData = await Promise.all(
-    //   categories.map(async (category) => {
-    //     // Fetch subcategories for each category
-    //     const subcategories = await Subcategory.find({ category: category._id }, 'name');
-    //     return {
-    //       _id: category._id,
-    //       name: category.name,
-    //       subcategories: subcategories.map(sub => sub.name),
-    //     };
-    //   })
-    // );
-
-    res.status(200).json({ categories: categories });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
-  }
-};
-
-
-
-const getSubcategoryByCategoryId = async (req, res) => {
-  try {
-    const {categoryId} = req.params
-    // Fetch all categories and populate their related subcategories
-    const categories = await Subcategory.find( { category : categoryId }).lean(); // Use `lean()` for better performance
-
-  
-
-    res.status(200).json({  success : true , error : false , data: categories });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
-  }
-};
-
-
-const getAllSubCategories = async (req, res) => {
-  try {
-    // Fetch all categories and populate their related subcategories
-    const subcategories = await Subcategory.find().populate('category', 'name').lean(); // Use `lean()` for better performance
-
-    res.status(200).json({ success : true , error :false , data: subcategories });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
-  }
-};
-
-
-
-
-
-// Create a new product (Admin only) with image upload
-const createProduct = async (req, res) => {
-  const { title, price, rating, description, category, subcategory , serialnumber } = req.body;
-  const images = req.files.filter(file => file.mimetype.includes('image')).map(file => `${process.env.BACKEND_URL}/${file.path}`); // Array of image paths
-  try {
-    // Validate category and subcategory
-    const categoryExists = await Category.findById(category);
-    if (!categoryExists) {
-      return res.status(404).json({ message: 'Category not found' });
-    }
-
-    const subcategoryExists = await Subcategory.findById(subcategory);
-    if (!subcategoryExists) {
-      return res.status(404).json({ message: 'Subcategory not found' });
-    }
-
-    // Create the product
-    const newProduct = new Product({
-      title,
-      price,
-      rating,
-      description,
-      category,
-      serialnumber,
-      subcategory,
-      images,
-      createdBy: req.user.userId,
-    });
-
-    await newProduct.save();
-    res.status(201).json({ message: 'Product created successfully', product: newProduct });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Edit a product (Admin only) with image upload
-const editProduct = async (req, res) => {
-  const { id } = req.params;
-  const { title, price, rating, description, category, subcategory , serialnumber } = req.body;
-  const images = req.files.filter(file => file.mimetype.includes('image')).map(file => `${process.env.BACKEND_URL}/${file.path}`); // Array of image paths
-
-  try {
-    const product = await Product.findById(id);
+    // Find product by ID
+    const product = await Product.findById(id)
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Product not found' })
     }
 
-    // Update product fields
-    product.title = title || product.title;
-    product.price = price || product.price;
-    product.rating = rating || product.rating;
-    product.description = description || product.description;
-    product.serialnumber = serialnumber || product.serialnumber;
-    product.category = category || product.category;
-    product.subcategory = subcategory || product.subcategory;
-    product.images = images.length > 0 ? images : product.images; // Keep existing images if no new images are uploaded
+    // Update fields if provided
+    if (updatedData.name) product.name = updatedData.name
+    if (updatedData.price) product.price = updatedData.price
+    if (updatedData.fabric) product.fabric = updatedData.fabric
+    if (updatedData.description) product.description = updatedData.description
 
-    await product.save();
-
-    res.status(200).json({ message: 'Product updated successfully', product });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Delete a product (Admin only)
-const deleteProduct = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+    if (updatedData.sizes) {
+      product.sizes = Array.isArray(updatedData.sizes)
+        ? updatedData.sizes.filter((size) => size)
+        : [updatedData.sizes].filter((size) => size)
+    }
+    if (updatedData.colors) {
+      product.colors = Array.isArray(updatedData.colors)
+        ? updatedData.colors.filter((color) => color)
+        : [updatedData.colors].filter((color) => color)
     }
 
-    // Extract image paths and delete them
-    product.images.forEach(imageUrl => {
-      const filePath = imageUrl.replace(`${process.env.BACKEND_URL}/`, ''); // Remove backend URL to get the relative path
-      const absolutePath = path.resolve(filePath);
+    // Handle images correctly
+    const newImages = req.files
+      ? req.files
+          .map((file) => `${process.env.BACKEND_URL}/uploads/${file.filename}`)
+          .filter((image) => image) // Filter out any falsy values
+      : []
 
-      if (fs.existsSync(absolutePath)) {
-        fs.unlinkSync(absolutePath); // Delete the file
-      }
-    });
+    console.log(newImages, 'newImages')
 
-    // Delete the product
-    await product.deleteOne();
+    // Ensure existingImages is properly parsed into an array
+    const parsedExistingImages =
+      existingImages && typeof existingImages === 'string'
+        ? existingImages.split(',').map((img) => img.trim())
+        : Array.isArray(existingImages)
+          ? existingImages
+          : []
 
-    res.status(200).json({ message: 'Product and associated images deleted successfully' });
+    console.log(parsedExistingImages, 'existingImages')
+
+    // If no new images are uploaded, keep the existing ones
+    product.images =
+      newImages.length > 0
+        ? [...parsedExistingImages, ...newImages]
+        : parsedExistingImages
+
+    console.log(product.images, 'final images')
+
+    await product.save()
+    res.status(200).json({ message: 'Product updated successfully', product })
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error, please try again later' });
+    res.status(500).json({ message: error.message })
   }
-};
+}
 
-// Get all products for users
-const getAllProducts = async (req, res) => {
+// GET: Fetch all products
+exports.getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
       .populate('category', 'name')
       .populate('subcategory', 'name')
-      .populate('createdBy', 'name email');
-
-
     if (!products) {
-      res.status(204).json({ success: true, message: "No Product Found", error: false, data: products });
+      res
+        .status(204)
+        .json({ success: true, data: [], message: 'No data found' })
     }
-    res.status(200).json({ success: true, message: "Product Fetched Successfully", error: false, data: products });
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(200).json({ success: true, data: products, message: 'Fetched' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
-};
-// Get all products by category ID
-const getProductsByCategoryId = async (req, res) => {
-  const { categoryId } = req.params; // Extract categoryId from the route parameters
+}
 
+// GET: Fetch all products
+exports.getAllProductsByCategoryId = async (req, res) => {
   try {
-    // Fetch all subcategories under the given category
-    const subcategories = await Subcategory.find({ category: categoryId }, '_id');
-
-    // Extract subcategory IDs into an array
-    const subcategoryIds = subcategories.map(sub => sub._id);
-
-    // Fetch all products related to the category or its subcategories
-    const products = await Product.find({
-      $or: [
-        { category: categoryId },
-        { subcategory: { $in: subcategoryIds } },
-      ],
-    })
-      .populate('category', 'name') // Populate category details
-      .populate('subcategory', 'name') // Populate subcategory details
-    
-    if (!products.length) {
-      return res.status(204).json({
-        success: true,
-        message: "No Product Found",
-        error: false,
-        data: [],
-      });
+    const { categoryId } = req.params
+    const subcategory = await Subcategory.find(
+      { category: categoryId },
+      '_id name'
+    )
+    console.log(subcategory)
+    const products = await Product.find({ category: categoryId })
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+    if (!products) {
+      res
+        .status(204)
+        .json({ success: true, data: [], message: 'No data found' })
     }
 
     res.status(200).json({
       success: true,
-      message: "Products Fetched Successfully",
-      error: false,
-      data: products,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error, please try again later" });
+      data: {
+        subcategory,
+        products
+      },
+      message: 'Fetched'
+    })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
   }
-};
+}
+
+// GET: Fetch all products with specific fields (id, name, first image)
+exports.getAllProductsName = async (req, res) => {
+  try {
+    console.log('in this')
+    const products = await Product.find({}, 'name _id images')
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+    if (!products) {
+      res
+        .status(204)
+        .json({ success: true, data: products, message: 'No data found' })
+    }
+
+    res.status(200).json({ success: true, data: products, message: 'Fetched' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+
+    // Increment viewCount
+    await Product.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } })
+
+    res.status(200).json({ success: true, data: product, message: 'Fetched' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+// DELETE: Admin can delete a product and its associated images
+exports.deleteProduct = async (req, res) => {
+  try {
+    // Fetch the product by ID
+    const product = await Product.findById(req.params.id)
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' })
+    }
+
+    // Delete images from the server if they exist
+    if (product.images && product.images.length > 0) {
+      product.images.forEach((image) => {
+        const imagePath = path.join(
+          __dirname,
+          `../uploads/${image.split('/uploads/')[1]}`
+        )
+        // Check if the image file exists and then remove it
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath)
+        }
+      })
+    }
 
 
 
+    // Delete the product from the database
+    await product.deleteOne()
 
+    res
+      .status(200)
+      .json({ message: 'Product and its images deleted successfully' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
 
+// GET: Fetch trending products
+exports.getTrendingProducts = async (req, res) => {
+  try {
+    // Define the time range for trending (last 7 days)
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
+    // Fetch trending products based on weighted criteria (salesCount + viewCount)
+    const trendingProducts = await Product.find({
+      trending: true // Products added or viewed in the last 7 days
+    })
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
 
+      .limit(6) // Fetch top 10 trending products
 
+    if (!trendingProducts || trendingProducts.length === 0) {
+      return res.status(204).json({
+        success: true,
+        data: [],
+        message: 'No trending products found'
+      })
+    }
 
+    res.status(200).json({
+      success: true,
+      data: trendingProducts,
+      message: 'Trending products fetched successfully'
+    })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
 
+exports.updateStock = async (req, res) => {
+  try {
+    const { productId } = req.params // Get product ID from URL
+    const { available } = req.body // Get stock value from request body
 
+    // Validate request
+    if (typeof available !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid value for available. It should be true or false.'
+      })
+    }
 
-module.exports = {
-  createCategory,
-  createSubcategory,
-  createProduct,
-  editProduct,
-  deleteProduct,
-  getAllProducts,
-  deleteCategory,
-  deleteSubcategory,
-  getAllCategoriesWithSubcategories,
-  getAllSubCategories,
-  getSubcategoryByCategoryId,
-  getProductsByCategoryId,
-  getAllCategories
-};
+    // Find product and update stock
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { inStock: available },
+      { new: true, runValidators: true }
+    )
+
+    // Check if product exists
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Product not found' })
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product,
+      message: 'Stock updated successfully'
+    })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+exports.updateTrending = async (req, res) => {
+  try {
+    const { productId } = req.params // Get product ID from URL
+    const { trending } = req.body // Get stock value from request body
+
+    // Validate request
+    if (typeof trending !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid value for trending. It should be true or false.'
+      })
+    }
+
+    // Find product and update stock
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { trending: trending },
+      { new: true, runValidators: true }
+    )
+
+    // Check if product exists
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Product not found' })
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product,
+      message: 'Trending updated successfully'
+    })
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+}

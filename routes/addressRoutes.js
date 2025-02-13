@@ -1,16 +1,15 @@
-const express = require("express");
-const addressController = require("../controllers/addressController");
-const {verifyAccessToken} = require("../middlewares/authMiddleware"); // JWT authentication middleware
+const express = require('express')
+const router = express.Router()
+const addressController = require('../controllers/addressController')
+const {
+  authenticate,
+  authorizeAdmin
+} = require('../middlewares/authMiddleware')
+// CRUD Routes
+router.post('/', authenticate(), addressController.createAddress) // Create Address
+router.get('/', authenticate(), addressController.getAddresses) // Get All Addresses
+router.get('/:id', authenticate(), addressController.getAddressById) // Get Address by ID
+router.put('/:id', authenticate(), addressController.updateAddress) // Update Address
+router.delete('/:id', authenticate(), addressController.deleteAddress) // Delete Address
 
-const router = express.Router();
-
-// Apply auth middleware to protect routes
-
-// Address routes
-router.post("/", verifyAccessToken , addressController.createAddress); // Create an address
-router.get("/", verifyAccessToken , addressController.getAddresses); // Get all addresses
-router.get("/:addressId",  verifyAccessToken , addressController.getAddressById); // Get a specific address
-router.put("/:addressId",  verifyAccessToken , addressController.updateAddress); // Update an address
-router.delete("/:addressId", verifyAccessToken , addressController.deleteAddress); // Delete an address
-
-module.exports = router;
+module.exports = router

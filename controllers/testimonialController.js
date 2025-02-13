@@ -1,16 +1,15 @@
 const Testimonial = require('../models/Testimonial')
+const { testimonialSchema } = require('../validation/validation')
 
 // Create a new testimonial
 exports.createTestimonial = async (req, res) => {
   // const { error } = testimonialSchema.validate(req.body)
   // if (error) return res.status(400).json({ message: error.details[0].message })
-  const image = req.file && req.file.mimetype.includes('image') 
-  ? `${process.env.BACKEND_URL}/${req.file.path}` 
-  : null; // Null if no valid image
+
   try {
     const testimonialData = {
       ...req.body,
-      image: image
+      image: `${process.env.BACKEND_URL}/uploads/${req.file.filename}` // Store the image path in the database
     }
 
     const testimonial = new Testimonial(testimonialData)

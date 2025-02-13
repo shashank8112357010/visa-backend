@@ -1,34 +1,39 @@
-const express = require('express');
-const router = express.Router();
-const { createCategory, createSubcategory, deleteCategory, deleteSubcategory, getAllCategoriesWithSubcategories, getAllSubCategories, getSubcategoryByCategoryId, getAllCategories } = require('../controllers/productController');
-const upload = require('../config/multer'); // Multer configuration
-const { verifyAccessToken, isAdmin } = require('../middlewares/authMiddleware');
+const express = require('express')
+const router = express.Router()
+const {
+  createCategory,
+  createSubcategory,
+  deleteCategory,
+  deleteSubcategory,
+  getAllCategoriesWithSubcategories,
+  getAllSubCategories,
+  getSubcategoryByCategoryId
+} = require('../controllers/categoryController')
+const {
+  authenticate,
+  authorizeAdmin
+} = require('../middlewares/authMiddleware')
 
 // Category Routes
-router.post('/', verifyAccessToken, isAdmin, upload.single('image') , createCategory);
+router.post('/', authenticate(), authorizeAdmin(), createCategory)
 
 // Subcategory Routes
-router.post('/subcategory', verifyAccessToken, isAdmin, upload.single('image')  , createSubcategory);
+router.post('/subcategory', authenticate(), authorizeAdmin(), createSubcategory)
 
 // DELETE /api/categories/:categoryId - Admin only
-router.delete('/:categoryId', verifyAccessToken, isAdmin, deleteCategory);
-
+router.delete('/:categoryId', authenticate(), authorizeAdmin(), deleteCategory)
 
 // DELETE /api/subcategories/:subcategoryId - Admin only
-router.delete('/subcategory/:subcategoryId', verifyAccessToken, isAdmin, deleteSubcategory);
-
+router.delete(
+  '/subcategory/:subcategoryId',
+  authenticate(),
+  authorizeAdmin(),
+  deleteSubcategory
+)
 
 // GET /api/categories - Fetch all categories with their subcategories
-router.get('/categoryandsubcategpry', getAllCategoriesWithSubcategories);
-router.get('/', getAllCategories);
-
-
+router.get('/', getAllCategoriesWithSubcategories)
 router.get('/subcategory', getAllSubCategories)
 router.get(`/:categoryId/subcategory`, getSubcategoryByCategoryId)
 
-
-
-
-
-
-module.exports = router;
+module.exports = router

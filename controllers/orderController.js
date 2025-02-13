@@ -1,182 +1,286 @@
-const Razorpay = require("razorpay");
-const crypto = require("crypto");
-const Order = require("../models/orderModel");
-const nodemailer = require("nodemailer");
-require("dotenv").config();
+const Order = require('../models/Order')
+const Product = require('../models/Product')
+const { sendMail } = require('../common/sendmail')
+const { orderSchema } = require('../validation/validation')
 
-// Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+const User = require('../models/User')
 
-// Nodemailer transporter configuration
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
-// Helper function to send email
-const sendEmail = async (to, subject, text) => {
+// Create a new order
+exports.createOrder = async (req, res) => {
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to,
-      subject,
-      text,
-    });
-  } catch (error) {
-    console.error("Error sending email:", error);
-  }
-};
-
-// Create Razorpay Order
-exports.createRazorpayOrder = async (req, res) => {
-  const { amount, currency, receipt } = req.body;
-
-  try {
-    const options = {
-      amount: amount * 100, // Razorpay accepts amount in paise
-      currency: currency || "INR",
-      receipt: receipt || `receipt_${Date.now()}`,
-      payment_capture: 1,
-    };
-
-    const razorpayOrder = await razorpay.orders.create(options);
-    res.status(201).json({
-      id: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-      receipt: razorpayOrder.receipt,
-    });
-  } catch (error) {
-    console.error("Error creating Razorpay order:", error);
-    res.status(500).json({ error: "Failed to create Razorpay order" });
-  }
-};
-
-// Verify Razorpay Payment
-exports.verifyRazorpayPayment = async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-
-  try {
-    const generatedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-      
-
-
-    if (generatedSignature !== razorpay_signature) {
-      return res.status(400).json({ success : false , error: "Payment verification failed" });
+    const { error } = orderSchema.validate(req.body)
+    if (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: error.details[0].message })
     }
 
-    res.status(200).json({ success : true , message: "Payment verified successfully" });
-  } catch (error) {
-    console.error("Error verifying Razorpay payment:", error);
-    res.status(500).json({ error: "Payment verification error" });
-  }
-};
+    const { products, address, paymentMethod, currency } = req.body
 
-// Place Order
-exports.placeOrder = async (req, res) => {
-  const userId = req.user.userId; // Extract userId from token
-  const { products, order_id, totalAmount, address, transactionId } = req.body;
+    // Extract product IDs from the order
+    const productIds = products.map((p) => p.productId)
 
-  try {
+    // Fetch products from the database to validate their existence and stock
+    const foundProducts = await Product.find({ _id: { $in: productIds } })
+
+    if (foundProducts.length !== products.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Some products are invalid or unavailable.'
+      })
+    }
+
+    // Check stock availability for each product
+    const insufficientStock = products.some((p) => {
+      const product = foundProducts.find(
+        (fp) => fp._id.toString() === p.productId
+      )
+      return product.stock < p.quantity // Validate stock availability
+    })
+
+    if (insufficientStock) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient stock for one or more products.'
+      })
+    }
+
     // Create the order
-    const order = await Order.create({
-      _id: String(order_id),
-      user: userId,
+    const order = new Order({
+      userId: req.user.id,
       products,
-      totalAmount,
       address,
-      transactionId: transactionId
-    });
+      paymentMethod,
+      currency
+    })
 
-    // Send order confirmation email
-    const emailText = `Thank you for placing your order. Your order ID is ${order._id}.`;
-    await sendEmail(req.user.email, "Order Confirmation", emailText);
+    // Update product salesCount and stock
+    await Promise.all(
+      products.map(async (p) => {
+        await Product.findByIdAndUpdate(p.productId, {
+          $inc: { salesCount: p.quantity, stock: -p.quantity } // Decrement stock and increment sales count
+        })
+      })
+    )
 
-    res.status(201).json({ message: "Order placed successfully", order , success : true });
-  } catch (error) {
-    console.error("Error placing order:", error);
-    res.status(500).json({ error: "Failed to place order" });
+    // Save the order
+    await order.save()
+
+    // Optionally send an order confirmation email
+    await sendMail({
+      to: req.user.email,
+      subject: 'Order Confirmation',
+      text: `Thank you for your purchase! Your order (ID: ${order._id}) has been successfully placed.`
+    })
+
+    res.status(201).json({
+      success: true,
+      message: 'Order created successfully.',
+      order
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, message: 'Server error.' })
   }
-};
+}
 
-
-
-
-
-// User: Fetch orders
-exports.getUserOrders = async (req, res) => {
-  const userId = req.user.userId;
-
-  try {
-    const orders = await Order.find({ user: userId })
-      .populate("products.product", "title price images")
-      .populate("address");
-    res.status(200).json({ orders });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch orders" });
-  }
-};
-
-// Admin: Fetch all orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate("user", "name email")
-      .populate("products.product", "name price image")
-      .populate("address");
-    res.status(200).json({ orders });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch orders" });
-  }
-};
+    const orders = await Order.aggregate([
+      {
+        $lookup: {
+          from: 'products', // Collection name for products
+          localField: 'products.productId',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$products',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'products.productId',
+          foreignField: '_id',
+          as: 'productInfo'
+        }
+      },
+      {
+        $unwind: {
+          path: '$productInfo',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          'products.name': '$productInfo.name' // Add product name directly to the product array
+        }
+      },
+      {
+        $group: {
+          _id: '$_id',
+          orderId: { $first: '$_id' },
+          products: {
+            $push: {
+              productId: '$products.productId',
+              quantity: '$products.quantity',
+              name: '$products.name',
+              size: '$products.size',
+              color: '$products.color'
+            }
+          },
+          address: { $first: '$address' },
+          paymentMethod: { $first: '$paymentMethod' },
+          currency: { $first: '$currency' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' }
+        }
+      },
+      {
+        $project: {
+          orderId: 1,
+          products: 1,
+          address: 1,
+          paymentMethod: 1,
+          currency: 1,
+          status: 1,
+          createdAt: 1
+        }
+      }
+    ])
 
-// Admin: Update order status
-exports.updateOrderStatus = async (req, res) => {
-  const { orderId } = req.params;
-  const { orderStatus } = req.body;
+    if (!orders || orders.length === 0) {
+      return res
+        .status(204)
+        .json({ success: true, message: 'No Orders Found.' })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Orders fetched successfully.',
+      data: orders
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, message: 'Server error.' })
+  }
+}
+
+// Get orders for a specific user
+exports.getUserOrders = async (req, res) => {
+  try {
+    const userId = req.params.userId
+
+    if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid user ID.' })
+    }
+
+    const orders = await Order.find({ userId }).populate(
+      'products.productId',
+      'name price'
+    )
+
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'No orders found for this user.' })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Orders fetched successfully.',
+      orders
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, message: 'Server error.' })
+  }
+}
+
+// Mark an order as delivered
+exports.markOrderAsDelivered = async (req, res) => {
+  const { orderId } = req.params
 
   try {
-    const order = await Order.findById(orderId);
-
+    const order = await Order.findById(orderId)
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found.' })
     }
 
-    // Update order status
-    order.orderStatus = orderStatus;
-    order.updatedAt = Date.now();
-    await order.save();
-
-    // Send email notification based on the status
-    let emailText;
-    switch (orderStatus) {
-      case "Processing":
-        emailText = `Your order ${order._id} is now being processed.`;
-        break;
-      case "Shipped":
-        emailText = `Your order ${order._id} has been shipped.`;
-        break;
-      case "Delivered":
-        emailText = `Your order ${order._id} has been delivered. Thank you for shopping with us!`;
-        break;
-      default:
-        emailText = `Your order ${order._id} status has been updated.`;
+    // Check if the order is already delivered
+    if (order.status === 'delivered') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is already marked as delivered.'
+      })
     }
 
-    const userEmail = order.user.email || req.user.email; // Assuming user email is in token or order relation
-    await sendEmail(userEmail, "Order Status Update", emailText);
+    // Update the status to 'delivered'
+    order.status = 'delivered'
+    await order.save()
 
-    res.status(200).json({ message: "Order status updated successfully", order });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update order status" });
+    // Get the user's email to notify them
+    const user = await User.findById(order.userId)
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found.' })
+    }
+
+    // Send an email notification to the user
+    const subject = 'Your Order has been Delivered'
+    const message =
+      'Your order has been successfully delivered. Thank you for shopping with us!'
+    await sendMail(user.email, subject, message)
+
+    res.status(200).json({
+      success: true,
+      message: 'Order marked as delivered and user notified via email.',
+      order
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, message: 'Server error.' })
   }
-};
+}
+
+// Delete an order (if placed wrong)
+exports.deleteOrder = async (req, res) => {
+  const { orderId } = req.params
+
+  try {
+    const order = await Order.findById(orderId)
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Order not found.' })
+    }
+
+    // Ensure the order belongs to the current user
+    if (order.userId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to delete this order.'
+      })
+    }
+
+    // Delete the order
+    await Order.findByIdAndDelete(orderId)
+
+    res.status(200).json({
+      success: true,
+      message: 'Order deleted successfully.'
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ success: false, message: 'Server error.' })
+  }
+}

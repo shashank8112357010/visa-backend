@@ -1,15 +1,16 @@
 const Blog = require('../models/Blog')
+const { blogSchema } = require('../validation/validation')
 
 exports.createBlog = async (req, res) => {
   // Validate the data (excluding the image file)
+  const { error } = blogSchema.validate(req.body)
+  if (error) return res.status(400).json({ message: error.details[0].message })
+  console.log(req)
   try {
-    const image = req.file && req.file.mimetype.includes('image') 
-    ? `${process.env.BACKEND_URL}/${req.file.path}` 
-    : null; // Null if no valid image
     // Create a blog with the uploaded image path
     const blogData = {
       ...req.body,
-      image: image // Store the image path in the database
+      image: `${process.env.BACKEND_URL}/uploads/${req.file.filename}` // Store the image path in the database
     }
 
     const blog = new Blog(blogData)

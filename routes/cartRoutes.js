@@ -1,15 +1,21 @@
-const express = require("express");
-const {addToCart , IncreaseDecreaseFromCart , removeFromCart , getCart} = require("../controllers/cartController");
-const {verifyAccessToken} = require("../middlewares/authMiddleware"); // JWT authentication middleware
+const express = require('express')
+const {
+  addToCart,
+  IncreaseDecreaseFromCart,
+  removeFromCart,
+  getCart
+} = require('../controllers/CartController')
+const {
+  authenticate,
+  authorizeAdmin
+} = require('../middlewares/authMiddleware')
 
-const router = express.Router();
-
-
+const router = express.Router()
 
 // Cart routes
-router.post("/",  verifyAccessToken ,addToCart); // Add to cart
-router.put("/updatequantity",  verifyAccessToken , IncreaseDecreaseFromCart); // Decrease quantity
-router.delete("/remove/:productId", verifyAccessToken , removeFromCart); // Remove product from cart
-router.get("/",verifyAccessToken , getCart); // Get cart details
+router.post('/', authenticate(), addToCart) // Add to cart
+router.put('/updatequantity', authenticate(), IncreaseDecreaseFromCart) // Decrease quantity
+router.delete('/remove/:productId', authenticate(), removeFromCart) // Remove product from cart
+router.get('/', authenticate(), getCart) // Get cart details
 
-module.exports = router;
+module.exports = router

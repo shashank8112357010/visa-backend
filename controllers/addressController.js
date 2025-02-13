@@ -1,103 +1,90 @@
-const Address = require("../models/addressModel");
-require("dotenv").config()
-// Create a new address
+const Address = require('../models/Address')
+const { addressValidationSchema } = require('../validation/validation')
+
+// Create an Address
 exports.createAddress = async (req, res) => {
-  const userId = req.user.userId; // Extract userId from token
-  const { address, city, landmark, state, zipCode, country } = req.body;
+  const { error } = addressValidationSchema.validate(req.body)
+  if (error) return res.status(400).json({ message: error.details[0].message })
 
   try {
-    const newAddress = await Address.create({
-      user: userId,
-      address,
-      city,
-      landmark,
-      state,
-      zipCode,
-      country,
-    });
-
-    res.status(201).json({ message: "Address created successfully", address: newAddress });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create address" });
+    const address = await new Address({ ...req.body, user: req.user.id })
+    await address.save()
+    res.status(201).json({ success: true, data: address })
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: 'Server Error', error: err.message })
   }
-};
+}
 
-// Get all addresses for the user
+// Get all Addresses
 exports.getAddresses = async (req, res) => {
-  const userId = req.user.userId;
-
   try {
-    const addresses = await Address.find({ user: userId });
-    res.status(200).json({ addresses });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch addresses" });
+    const addresses = await Address.find()
+    res.status(200).json({ success: true, data: addresses })
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: 'Server Error', error: err.message })
   }
-};
+}
 
-// Get a specific address by ID
+// Get an Address by ID
 exports.getAddressById = async (req, res) => {
-  const { addressId } = req.params;
-
   try {
-    const address = await Address.findById(addressId);
+    const address = await Address.findById(req.params.id).populate('user')
+    if (!address)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Address not found' })
 
-    if (!address) {
-      return res.status(404).json({ error: "Address not found" });
-    }
-
-    res.status(200).json({ address });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch address" });
+    res.status(200).json({ success: true, data: address })
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: 'Server Error', error: err.message })
   }
-};
+}
 
-
-// Update an existing address
+// Update an Address
 exports.updateAddress = async (req, res) => {
-    const { addressId } = req.params;
-    const updates = req.body; // Partial updates provided by the user
-  
-    try {
-      // Fetch the existing address document
-      const existingAddress = await Address.findById(addressId);
-  
-      if (!existingAddress) {
-        return res.status(404).json({ error: "Address not found" });
-      }
-  
-      // Merge updates with existing fields
-      const updatedFields = {
-        address: updates.address || existingAddress.address,
-        city: updates.city || existingAddress.city,
-        landmark: updates.landmark || existingAddress.landmark,
-        state: updates.state || existingAddress.state,
-        zipCode: updates.zipCode || existingAddress.zipCode,
-        country: updates.country || existingAddress.country,
-      };
-  
-      // Update the document with the merged data
-      const updatedAddress = await Address.findByIdAndUpdate(addressId, updatedFields, { new: true });
-  
-      res.status(200).json({ message: "Address updated successfully", address: updatedAddress });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update address" });
-    }
-  };
-  
-
-// Delete an address = > 
-exports.deleteAddress = async (req, res) => {
-  const { addressId } = req.params;
+  const { error } = addressValidationSchema.validate(req.body)
+  if (error) return res.status(400).json({ message: error.details[0].message })
 
   try {
-    const deletedAddress = await Address.findByIdAndDelete(addressId);
+    const address = await Address.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    })
 
-    if (!deletedAddress) {
-      return res.status(404).json({ error: "Address not found" });
-    }
+    if (!address)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Address not found' })
 
-    res.status(200).json({ message: "Address deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete address" });
+    res.status(200).json({ success: true, data: address })
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: 'Server Error', error: err.message })
   }
-};
+}
+
+// Delete an Address
+exports.deleteAddress = async (req, res) => {
+  try {
+    const address = await Address.findByIdAndDelete(req.params.id)
+    if (!address)
+      return res
+        .status(404)
+        .json({ success: false, message: 'Address not found' })
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Address deleted successfully' })
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: 'Server Error', error: err.message })
+  }
+}

@@ -1,32 +1,37 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModel")
+const jwt = require('jsonwebtoken')
 
-const verifyAccessToken = (req, res, next) => {
-  const token = req?.header('Authorization').split(' ')[1]
+exports.authenticate = () => (req, res, next) => {
+  const authHeader = req.header('Authorization')
+
+  // Check if the Authorization header exists
+  if (!authHeader) {
+    return res
+      .status(401)
+      .json({ message: 'Access denied. No token provided.' })
+  }
+
+  // Split the Bearer token
+  const token = authHeader.split(' ')[1]
   if (!token) {
-    return res?.status(401).json({ message: "Access token is required" });
+    return res
+      .status(401)
+      .json({ message: 'Access denied. Invalid token format.' })
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req.user = decoded; // Attach the userId from the token to the request
-    next();
-  } catch (error) {
-    res?.status(403).json({ message: "Invalid or expired access token" });
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = decoded
+    next()
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid token.' })
   }
-};
+}
 
-// Admin authorization middleware
-const isAdmin = async (req, res, next) => {
-  try {
-
-    if (req.user.role !== "admin") {
-      return res?.status(403).json({ message: "Access denied, Admins only" });
-    }
-    next();
-  } catch (error) {
-    res?.status(500).json({ message: error.message });
+exports.authorizeAdmin = () => (req, res, next) => {
+  // Check if the user role is admin
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admins only.' })
   }
-};
-
-module.exports = { verifyAccessToken, isAdmin };
+  next()
+}

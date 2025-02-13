@@ -8,11 +8,9 @@ const createBanner = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'Image is required' })
     }
-    const image = req.file && req.file.mimetype.includes('image') 
-    ? `${process.env.BACKEND_URL}/${req.file.path}` 
-    : null; // Null if no valid image
+
     const newBanner = new Banner({
-      image: image
+      image: `${process.env.BACKEND_URL}/uploads/${req.file.filename}`
     })
     await newBanner.save()
 

@@ -1,28 +1,32 @@
-const express = require("express");
-const orderController = require("../controllers/orderController");
-const {verifyAccessToken , isAdmin} = require("../middlewares/authMiddleware"); // JWT authentication middleware
+const express = require('express')
+const router = express.Router()
+const {
+  createOrder,
+  getUserOrders,
+  markOrderAsDelivered,
+  deleteOrder,
+  getAllOrders
+} = require('../controllers/orderController')
+const {
+  authenticate,
+  authorizeAdmin
+} = require('../middlewares/authMiddleware')
 
-const router = express.Router();
+// Routes
+router.post('/', authenticate(), createOrder) // Place an order
+router.get('/', authenticate(), authorizeAdmin(), getAllOrders) // Place an order
 
-// User routes
+router.get('/user/:userId', authenticate(), getUserOrders) // Get orders for a user
 
+// Mark an order as delivered
+router.put(
+  '/status/:orderId',
+  authenticate(),
+  authorizeAdmin(),
+  markOrderAsDelivered
+)
 
-// User routes
-router.post("/", verifyAccessToken, orderController.placeOrder); // Place an order
-router.get("/", verifyAccessToken, orderController.getUserOrders); // Get user orders
+// Delete an order (if placed wrong)
+router.delete('/:orderId', authenticate(), deleteOrder)
 
-// Razorpay routes
-router.post("/razorpay/order", verifyAccessToken, orderController.createRazorpayOrder); // Create Razorpay order
-router.post("/razorpay/verify", verifyAccessToken, orderController.verifyRazorpayPayment); // Verify Razorpay payment
-
-// Admin routes
-router.get("/admin/orders", verifyAccessToken, isAdmin, orderController.getAllOrders); // Fetch all orders
-router.put("/admin/order/:orderId", verifyAccessToken, isAdmin, orderController.updateOrderStatus); // Update order status
-
-
-module.exports = router;
-
-
-
-
-
+module.exports = router

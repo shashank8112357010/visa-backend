@@ -1,21 +1,21 @@
 const express = require('express')
 const {
-  verifyAccessToken,
-  isAdmin
+  authenticate,
+  authorizeAdmin
 } = require('../middlewares/authMiddleware')
 const {
   createBanner,
   getAllBanners,
   deleteBanner
 } = require('../controllers/bannerController')
-const upload = require('../config/multer')
+const upload = require('../common/multer')
 const router = express.Router()
 
 // Create a banner (Admin only)
 router.post(
   '/',
-  verifyAccessToken,
-  isAdmin,
+  authenticate(),
+  authorizeAdmin(),
   upload.single('image'),
   createBanner
 )
@@ -24,6 +24,6 @@ router.post(
 router.get('/', getAllBanners)
 
 // Delete a banner (Admin only)
-router.delete('/:id', verifyAccessToken, isAdmin, deleteBanner)
+router.delete('/:id', authenticate(), authorizeAdmin(), deleteBanner)
 
 module.exports = router

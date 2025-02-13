@@ -1,20 +1,21 @@
 const express = require('express')
 const {
-  verifyAccessToken,
-  isAdmin
+  authenticate,
+  authorizeAdmin
 } = require('../middlewares/authMiddleware')
 const {
   createTestimonial,
   getAllTestimonials,
   deleteTestimonial
 } = require('../controllers/testimonialController')
-const upload = require('../config/multer')
+const upload = require('../common/multer')
 const router = express.Router()
 
 // Create a new testimonial
 router.post(
   '/',
-  verifyAccessToken , isAdmin,
+  authenticate(),
+  authorizeAdmin(),
   upload.single('image'),
   createTestimonial
 )
@@ -25,7 +26,8 @@ router.get('/', getAllTestimonials)
 // Delete a testimonial (only accessible by admin)
 router.delete(
   '/:testimonialId',
-  verifyAccessToken , isAdmin,
+  authenticate(),
+  authorizeAdmin(),
   deleteTestimonial
 )
 

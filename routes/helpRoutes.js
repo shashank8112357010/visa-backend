@@ -1,18 +1,37 @@
-const express = require("express");
-const router = express.Router();
-const helpController = require("../controllers/helpController");
-const { verifyAccessToken, isAdmin } = require("../middlewares/authMiddleware");
+const express = require('express')
+const {
+  authenticate,
+  authorizeAdmin
+} = require('../middlewares/authMiddleware')
+const {
+  createHelpRequest,
+  getAllHelpRequests,
+  updateHelpRequestStatus, // Import the new function
+  deleteHelpRequest,
+  getAllHelpRequestByUser
+} = require('../controllers/helpRequestController')
 
-// User routes
-router.post("/", helpController.createHelpTicket);
+const router = express.Router()
 
-router.get("/:id", helpController.getTicketById);
+router.post('/', authenticate(), createHelpRequest)
+router.get('/', authenticate(), getAllHelpRequestByUser)
 
-// Admin routes
-router.get("/admin/help", verifyAccessToken, isAdmin,   helpController.getAllTickets);
-router.put("/admin/help/:id/resolve", verifyAccessToken, isAdmin,  helpController.resolveTicket);
-router.delete("/admin/help/:id",  verifyAccessToken, isAdmin, helpController.deleteTicket);
+router.get('/users', authenticate(), authorizeAdmin(), getAllHelpRequests)
 
+// New route to update the status of a help request
+router.put(
+  '/status/:helpRequestId',
+  authenticate(),
+  authorizeAdmin(),
+  updateHelpRequestStatus
+)
 
+// New route to delete a help request
+router.delete(
+  '/:helpRequestId',
+  authenticate(),
+  authorizeAdmin(),
+  deleteHelpRequest
+)
 
-module.exports = router;
+module.exports = router
