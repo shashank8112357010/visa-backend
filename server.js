@@ -60,7 +60,7 @@ app.use("/furniture/api/testimonials", testimonialRoutes );
 
 
 
-app.get('/furniture/test' , (req,res)=>res.send("Furniture backend is up and running"))
+app.get('/furniture/test' , (req,res)=>res.send("Furniture backend is up and running...."))
 
 
 
