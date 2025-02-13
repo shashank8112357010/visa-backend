@@ -35,7 +35,6 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    console.log(user);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -66,7 +65,6 @@ const loginUser = async (req, res) => {
 // Forgot password: Generate reset token and send email
 const forgotPassword = async (req, res) => {
   const { email } = req.params;
-  console.log(email);
   try {
     const user = await User.findOne({ email });
 
@@ -76,11 +74,9 @@ const forgotPassword = async (req, res) => {
 
     // Generate a password reset token
     const resetToken = crypto.randomBytes(20).toString("hex");
-    console.log(resetToken, "resetToken");
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
-    console.log(user);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",

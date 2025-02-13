@@ -88,7 +88,6 @@ exports.getAllServices = async (req, res) => {
 exports.updateServiceStatus = async (req, res) => {
   try {
     const { status  , id } = req.params;
-    console.log(status , "status");
     const service = await Service.findById(id);
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });

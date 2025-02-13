@@ -123,7 +123,6 @@ serviceSchema.pre('save', function (next) {
 // Virtual field to display the time taken in a readable string format
 serviceSchema.virtual('timeTakenReadable').get(function () {
     const { days, hours, minutes } = this.timeTakenDetailed || {};
-      console.log(`${days} days, ${hours} hours, ${minutes} minutes`);
     if (days !== null && hours !== null && minutes !== null) {
         return `${days} days, ${hours} hours, ${minutes} minutes`;
     }

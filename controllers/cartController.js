@@ -14,8 +14,6 @@ exports.addToCart = async (req, res) => {
       const productIndex = cart.items.findIndex((item) => item.product.toString() === productId);
       if (productIndex > -1) {
 
-        console.log(typeof (quantity), "quantity body")
-        console.log(typeof (cart.items[productIndex].quantity), "quantity db")
 
         // Increase quantity if product exists
         cart.items[productIndex].quantity += Number(quantity);

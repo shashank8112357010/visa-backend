@@ -61,7 +61,6 @@ exports.createRazorpayOrder = async (req, res) => {
 // Verify Razorpay Payment
 exports.verifyRazorpayPayment = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  console.log(req.body);
 
   try {
     const generatedSignature = crypto
@@ -69,8 +68,6 @@ exports.verifyRazorpayPayment = async (req, res) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
       
-      console.log(generatedSignature , "generatedSignature");
-      console.log(razorpay_signature , "razorpay_signature");
 
 
     if (generatedSignature !== razorpay_signature) {

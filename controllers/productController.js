@@ -105,7 +105,6 @@ const deleteSubcategory = async (req, res) => {
     products.forEach(product => {
       product.images.forEach(imageUrl => {
         const filePath = imageUrl.replace(`${process.env.BACKEND_URL}/`, '');
-        console.log(filePath , "filePath");
         const absolutePath = path.resolve(filePath);
         if (fs.existsSync(absolutePath)) {
           fs.unlinkSync(absolutePath);
