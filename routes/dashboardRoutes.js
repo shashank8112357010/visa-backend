@@ -29,8 +29,6 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
       .sort({ updatedAt: -1 })
       .select('updatedAt')
 
-
-
     const orderCount = await Order.countDocuments()
     const orderLastUpdated = await Order.findOne()
       .sort({ updatedAt: -1 })
@@ -40,8 +38,6 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
     const productLastUpdated = await Product.findOne()
       .sort({ updatedAt: -1 })
       .select('updatedAt')
-
-
 
     const testimonialCount = await Testimonial.countDocuments()
     const testimonialLastUpdated = await Testimonial.findOne()
@@ -78,7 +74,7 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
             ? helpRequestLastUpdated.updatedAt
             : null
         },
-      
+
         order: {
           count: orderCount,
           lastUpdated: orderLastUpdated ? orderLastUpdated.updatedAt : null
@@ -87,7 +83,7 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
           count: productCount,
           lastUpdated: productLastUpdated ? productLastUpdated.updatedAt : null
         },
-       
+
         testimonial: {
           count: testimonialCount,
           lastUpdated: testimonialLastUpdated

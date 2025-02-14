@@ -10,7 +10,7 @@ const createBanner = async (req, res) => {
     }
 
     const newBanner = new Banner({
-      image: `${process.env.BACKEND_URL}/uploads/${req.file.filename}`
+      image: `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}`
     })
     await newBanner.save()
 
@@ -44,7 +44,7 @@ const deleteBanner = async (req, res) => {
     if (banner.image) {
       const imagePath = path.join(
         __dirname,
-        `../uploads/${banner.image.split('/uploads/')[1]}`
+        `../uploads/${banner.image.split('/furniture_uploads/')[1]}`
       )
 
       // Check if file exists before deleting

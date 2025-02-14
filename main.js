@@ -25,7 +25,7 @@ const app = express()
 app.use(cors({}))
 
 app.use(bodyParser.json())
-app.use('/furniture/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use('/furniture/furniture_uploads', express.static(path.join(__dirname, 'furniture_uploads')))
 
 // MongoDB Connection
 mongoose

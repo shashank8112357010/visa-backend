@@ -227,8 +227,6 @@ exports.deleteProduct = async (req, res) => {
       })
     }
 
-
-
     // Delete the product from the database
     await product.deleteOne()
 
