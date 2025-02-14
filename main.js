@@ -30,24 +30,13 @@ app.use(
   express.static(path.join(__dirname, 'furniture_uploads'))
 )
 
-
-
-
-
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log('Data Base Connected'))
   .catch((err) => console.error('DB Connection Error:', err))
 
-
-
-
-
-app.get('/furniture/test', (req, res) => res.send('Server is up for Furniture'))
-
-
-
+app.get('/furniture/test', (req, res) => res.send('Server is up for Furniture plywood'))
 
 // Routes
 app.use('/furniture/api/users', userRoutes) // User routes
@@ -65,10 +54,6 @@ app.use('/furniture/api/address', addressRoutes) // Category and Subcategory rou
 app.use('/furniture/api/banner', bannerRoutes) // Category and Subcategory routes
 app.use('/furniture/api/contact', contactRoutes) // Category and Subcategory routes
 
-
-
-
-
 // Server Setup
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+app.listen(PORT, () => console.log(`Server running on port... ${PORT}`))
