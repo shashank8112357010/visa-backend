@@ -1,5 +1,5 @@
 const express = require('express')
-const wishlistController = require('../controllers/WishlistController')
+const wishlistController = require('../controllers/wishlistController')
 const {
   authenticate,
   authorizeAdmin
