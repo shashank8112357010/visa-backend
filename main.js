@@ -25,7 +25,14 @@ const app = express()
 app.use(cors({}))
 
 app.use(bodyParser.json())
-app.use('/furniture/furniture_uploads', express.static(path.join(__dirname, 'furniture_uploads')))
+app.use(
+  '/furniture/furniture_uploads',
+  express.static(path.join(__dirname, 'furniture_uploads'))
+)
+
+
+
+
 
 // MongoDB Connection
 mongoose
@@ -33,7 +40,15 @@ mongoose
   .then(() => console.log('Data Base Connected'))
   .catch((err) => console.error('DB Connection Error:', err))
 
+
+
+
+
 app.get('/furniture/test', (req, res) => res.send('Server is up for Furniture'))
+
+
+
+
 // Routes
 app.use('/furniture/api/users', userRoutes) // User routes
 app.use('/furniture/api/products', productRoutes) // Product routes
@@ -49,6 +64,10 @@ app.use('/furniture/api/wishlist', wishlistRoutes) // Category and Subcategory r
 app.use('/furniture/api/address', addressRoutes) // Category and Subcategory routes
 app.use('/furniture/api/banner', bannerRoutes) // Category and Subcategory routes
 app.use('/furniture/api/contact', contactRoutes) // Category and Subcategory routes
+
+
+
+
 
 // Server Setup
 const PORT = process.env.PORT || 5000
