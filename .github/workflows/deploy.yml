@@ -29,7 +29,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@157.173.220.43 << EOF
             # Navigate to the project directory
-            cd /root/furniture/furniture-backend
+            cd /root/furniture-backend
             
             # Pull the latest changes
             git pull origin main
