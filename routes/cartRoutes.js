@@ -4,7 +4,7 @@ const {
   IncreaseDecreaseFromCart,
   removeFromCart,
   getCart
-} = require('../controllers/CartController')
+} = require('../controllers/cartController.js')
 const {
   authenticate,
   authorizeAdmin

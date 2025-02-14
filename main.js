@@ -36,7 +36,9 @@ mongoose
   .then(() => console.log('Data Base Connected'))
   .catch((err) => console.error('DB Connection Error:', err))
 
-app.get('/furniture/test', (req, res) => res.send('Server is up for Furniture plywood'))
+app.get('/furniture/test', (req, res) =>
+  res.send('Server is up for Furniture plywood')
+)
 
 // Routes
 app.use('/furniture/api/users', userRoutes) // User routes
