@@ -1,12 +1,12 @@
 const mongoose = require('mongoose')
-
+// isNewArrival;
+// isBestSeller;
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
     ratings: { type: Number, default: 0 },
     price: { type: Number, required: true },
-    sizes: [{ type: String }],
     colors: [{ type: String }],
     images: [{ type: String }],
     category: {
@@ -19,14 +19,11 @@ const productSchema = new mongoose.Schema(
       ref: 'Subcategory',
       required: true
     },
-    stock: { type: Number, required: true, default: 0 },
-    fabric: { type: String, required: true },
+    newarrival: { type: String, required: true },
+    bestsellor: { type: String, required: false },
     trending: { type: Boolean, required: true },
-    createdAt: { type: Date, default: Date.now },
-    salesCount: { type: Number, default: 0 }, // To track purchases
-    inStock: { type: Boolean, default: true }, // To track purchases
-    discount: { type: Number, default: 0 }, // To track purchases
-    viewCount: { type: Number, default: 0 } // To track views
+    inStock: { type: Boolean, default: true }, 
+    discount: { type: Number, default: 0 }, 
   },
   { timestamps: true }
 )

@@ -10,7 +10,7 @@ exports.createBlog = async (req, res) => {
     // Create a blog with the uploaded image path
     const blogData = {
       ...req.body,
-      image: `${process.env.BACKEND_URL}/uploads/${req.file.filename}` // Store the image path in the database
+      image: `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}` // Store the image path in the database
     }
 
     const blog = new Blog(blogData)
