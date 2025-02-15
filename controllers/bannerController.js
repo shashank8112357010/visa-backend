@@ -44,7 +44,7 @@ const deleteBanner = async (req, res) => {
     if (banner.image) {
       const imagePath = path.join(
         __dirname,
-        `../uploads/${banner.image.split('/furniture_uploads/')[1]}`
+        `../furniture_uploads/${banner.image.split('/furniture_uploads/')[1]}`
       )
 
       // Check if file exists before deleting

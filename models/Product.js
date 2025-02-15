@@ -22,8 +22,8 @@ const productSchema = new mongoose.Schema(
     newarrival: { type: String, required: true },
     bestsellor: { type: String, required: false },
     trending: { type: Boolean, required: true },
-    inStock: { type: Boolean, default: true }, 
-    discount: { type: Number, default: 0 }, 
+    inStock: { type: Boolean, default: true },
+    discount: { type: Number, default: 0 }
   },
   { timestamps: true }
 )

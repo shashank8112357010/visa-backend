@@ -7,7 +7,7 @@ exports.createReview = async (req, res) => {
   try {
     // Handle optional image
     const imagePath = req.file
-      ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}`
+      ? `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}`
       : 'N/A'
 
     // Create a new review instance
