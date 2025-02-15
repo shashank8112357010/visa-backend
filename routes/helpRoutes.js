@@ -6,32 +6,22 @@ const {
 const {
   createHelpRequest,
   getAllHelpRequests,
-  updateHelpRequestStatus, // Import the new function
+  updateHelpRequestStatus,
   deleteHelpRequest,
   getAllHelpRequestByUser
 } = require('../controllers/helpRequestController')
 
 const router = express.Router()
 
-router.post('/', authenticate(), createHelpRequest)
-router.get('/', authenticate(), getAllHelpRequestByUser)
+// Public route (No authentication needed)
+router.post('/', createHelpRequest)
 
-router.get('/users', authenticate(), authorizeAdmin(), getAllHelpRequests)
+// Public route (Fetch by email query param)
+router.get('/users', getAllHelpRequestByUser)
 
-// New route to update the status of a help request
-router.put(
-  '/status/:helpRequestId',
-  authenticate(),
-  authorizeAdmin(),
-  updateHelpRequestStatus
-)
-
-// New route to delete a help request
-router.delete(
-  '/:helpRequestId',
-  authenticate(),
-  authorizeAdmin(),
-  deleteHelpRequest
-)
+// Admin routes
+router.get('/', authenticate(), authorizeAdmin(), getAllHelpRequests)
+router.put('/status/:helpRequestId', authenticate(), authorizeAdmin(), updateHelpRequestStatus)
+router.delete('/:helpRequestId', authenticate(), authorizeAdmin(), deleteHelpRequest)
 
 module.exports = router

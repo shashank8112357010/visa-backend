@@ -1,15 +1,13 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const helpSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    orderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Order',
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    issueType: {
+      type: String,
+      enum: ['Contact Us', 'Rent Your Property', 'Franchise', 'Complaints'],
       required: true
     },
     issue: { type: String, required: true },
@@ -17,6 +15,6 @@ const helpSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now }
   },
   { timestamps: true }
-)
+);
 
-module.exports = mongoose.model('HelpRequest', helpSchema)
+module.exports = mongoose.model('HelpRequest', helpSchema);

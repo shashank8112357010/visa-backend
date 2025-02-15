@@ -1,6 +1,4 @@
 const mongoose = require('mongoose')
-// isNewArrival;
-// isBestSeller;
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -23,7 +21,17 @@ const productSchema = new mongoose.Schema(
     bestsellor: { type: String, required: false },
     trending: { type: Boolean, required: true },
     inStock: { type: Boolean, default: true },
-    discount: { type: Number, default: 0 }
+    discount: { type: Number, default: 0 },
+    custom: [
+      {
+        image : String ,
+        price  : Number,
+        title  : String ,
+      }
+    ],
+    cupon : {
+      field : String
+    }
   },
   { timestamps: true }
 )

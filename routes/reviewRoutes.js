@@ -8,7 +8,8 @@ const {
   getPendingReviews,
   approveReview,
   deleteReview,
-  getReviewsByProductId
+  getReviewsByProductId,
+  getRecentReviews
 } = require('../controllers/reviewController')
 const upload = require('../common/multer')
 
@@ -17,6 +18,7 @@ const router = express.Router()
 router.post('/', upload.single('image'), createReview)
 router.get('/', authenticate(), authorizeAdmin(), getPendingReviews)
 router.get('/:productId', getReviewsByProductId)
+router.get('/recent', getRecentReviews);
 
 router.patch('/:id', authenticate(), authorizeAdmin(), approveReview)
 router.delete('/:reviewId', authenticate(), authorizeAdmin(), deleteReview)

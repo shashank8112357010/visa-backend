@@ -83,3 +83,19 @@ exports.deleteReview = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
+
+
+exports.getRecentReviews = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query; // Default to 10 recent reviews
+    const reviews = await Review.find()
+      .populate('product', 'name') // Populate product name
+      .sort({ createdAt: -1 }) // Sort by latest
+      .limit(parseInt(limit)); // Limit results
+
+    res.status(200).json({ success: true, data: reviews });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

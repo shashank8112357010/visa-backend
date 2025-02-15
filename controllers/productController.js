@@ -16,7 +16,6 @@ exports.createProduct = async (req, res) => {
           )
         : []
     }
-
     const product = new Product(productData)
     await product.save()
 

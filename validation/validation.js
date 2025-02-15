@@ -72,8 +72,34 @@ const reviewSchema = Joi.object({
 })
 
 const helpRequestSchema = Joi.object({
-  orderId: Joi.string().required(),
-  issue: Joi.string().required()
+  name: Joi.string().required().messages({
+    'any.required': 'Name is required',
+    'string.empty': 'Name cannot be empty'
+  }),
+  email: Joi.string().email().required().messages({
+    'any.required': 'Email is required',
+    'string.email': 'Invalid email format',
+    'string.empty': 'Email cannot be empty'
+  }),
+  phone: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .required()
+    .messages({
+      'any.required': 'Phone number is required',
+      'string.pattern.base': 'Phone number must be exactly 10 digits'
+    }),
+  issueType: Joi.string()
+    .valid('Contact Us', 'Rent Your Property', 'Franchise', 'Complaints')
+    .required()
+    .messages({
+      'any.required': 'Issue type is required',
+      'any.only':
+        'Invalid issue type. Must be one of: Contact Us, Rent Your Property, Franchise, Complaints'
+    }),
+  issue: Joi.string().required().messages({
+    'any.required': 'Issue description is required',
+    'string.empty': 'Issue description cannot be empty'
+  })
 })
 
 const styleSchema = Joi.object({

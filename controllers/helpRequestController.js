@@ -1,18 +1,20 @@
 const HelpRequest = require('../models/HelpRequest')
 const { helpRequestSchema } = require('../validation/validation')
-const { sendMail } = require('../common/sendmail') // Import the sendMail function
-const User = require('../models/User')
+const { sendMail } = require('../common/sendmail')
 
 exports.createHelpRequest = async (req, res) => {
   const { error } = helpRequestSchema.validate(req.body)
   if (error) return res.status(400).json({ message: error.details[0].message })
 
   try {
-    const helpRequest = new HelpRequest({ ...req.body, userId: req.user.id })
+    const helpRequest = new HelpRequest(req.body)
     await helpRequest.save()
-    res
-      .status(201)
-      .json({ message: 'Help request submitted successfully', helpRequest })
+
+    res.status(201).json({
+      success: true,
+      message: 'Help request submitted successfully',
+      helpRequest
+    })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -20,13 +22,15 @@ exports.createHelpRequest = async (req, res) => {
 
 exports.getAllHelpRequestByUser = async (req, res) => {
   try {
-    const helpRequests = await HelpRequest.findOne({ userId: req.user.userId })
-    if (!helpRequests) {
-      res.status(204).json({ success: true, message: 'No Content', data: [] })
+    const { email } = req.query // Fetch help requests by email
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' })
     }
+
+    const helpRequests = await HelpRequest.find({ email })
     res.status(200).json({
       success: true,
-      message: 'Help request fetched successfully',
+      message: 'Help requests fetched successfully',
       data: helpRequests
     })
   } catch (err) {
@@ -37,12 +41,9 @@ exports.getAllHelpRequestByUser = async (req, res) => {
 exports.getAllHelpRequests = async (req, res) => {
   try {
     const helpRequests = await HelpRequest.find()
-    if (!helpRequests) {
-      res.status(204).json({ success: true, message: 'No Content', data: [] })
-    }
     res.status(200).json({
       success: true,
-      message: 'Help request fetched successfully',
+      message: 'Help requests fetched successfully',
       data: helpRequests
     })
   } catch (err) {
@@ -50,35 +51,26 @@ exports.getAllHelpRequests = async (req, res) => {
   }
 }
 
-// Update the help request status to 'done' and notify the user via email
 exports.updateHelpRequestStatus = async (req, res) => {
   const { helpRequestId } = req.params
 
   try {
-    // Find the help request by ID
     const helpRequest = await HelpRequest.findById(helpRequestId)
     if (!helpRequest) {
       return res.status(404).json({ message: 'Help request not found' })
     }
 
-    // Update the status to 'done'
-    helpRequest.status = 'done'
+    // Update status to "Done"
+    helpRequest.status = 'Done'
     await helpRequest.save()
 
-    // Get the user's email
-    const user = await User.findById(helpRequest.userId) // Assuming userId is stored in the help request
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' })
-    }
-
-    // Send an email notification to the user
+    // Send email notification to user
     const subject = 'Your Help Request has been Resolved'
     const message =
-      'Your query has been successfully resolved. Thank you for reaching out to us!'
-    await sendMail(user.email, subject, message)
+      `Hello ${helpRequest.name},\n\nYour help request regarding "${helpRequest.issue}" has been successfully resolved. Thank you for reaching out to us!\n\nBest regards,\nSupport Team`
 
-    // Respond to the request
+    await sendMail(helpRequest.email, subject, message)
+
     res.status(200).json({
       success: true,
       message: 'Help request marked as done and user notified via email'
@@ -92,14 +84,11 @@ exports.deleteHelpRequest = async (req, res) => {
   const { helpRequestId } = req.params
 
   try {
-    // Find and delete the help request by ID
     const helpRequest = await HelpRequest.findByIdAndDelete(helpRequestId)
-
     if (!helpRequest) {
       return res.status(404).json({ message: 'Help request not found' })
     }
 
-    // Respond to the request
     res.status(200).json({
       success: true,
       message: 'Help request deleted successfully'
