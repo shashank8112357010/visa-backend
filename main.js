@@ -19,7 +19,7 @@ const cartRoutes = require('./routes/cartRoutes.js')
 const wishlistRoutes = require('./routes/wishlistRoutes.js')
 const addressRoutes = require('./routes/addressRoutes.js')
 const bannerRoutes = require('./routes/bannerRoutes.js')
-const contactRoutes = require('./routes/contactRoutes.js')
+const newsletterRoutes = require('./routes/newsLetterRoutes.js')
 
 const app = express()
 app.use(cors({}))
@@ -54,7 +54,8 @@ app.use('/furniture/api/cart', cartRoutes) // Category and Subcategory routes
 app.use('/furniture/api/wishlist', wishlistRoutes) // Category and Subcategory routes
 app.use('/furniture/api/address', addressRoutes) // Category and Subcategory routes
 app.use('/furniture/api/banner', bannerRoutes) // Category and Subcategory routes
-app.use('/furniture/api/contact', contactRoutes) // Category and Subcategory routes
+
+app.use('/furniture/api/newsletter', newsletterRoutes) // Category and Subcategory routes
 
 // Server Setup
 const PORT = process.env.PORT || 5000

@@ -21,7 +21,17 @@ router.get('/users', getAllHelpRequestByUser)
 
 // Admin routes
 router.get('/', authenticate(), authorizeAdmin(), getAllHelpRequests)
-router.put('/status/:helpRequestId', authenticate(), authorizeAdmin(), updateHelpRequestStatus)
-router.delete('/:helpRequestId', authenticate(), authorizeAdmin(), deleteHelpRequest)
+router.put(
+  '/status/:helpRequestId',
+  authenticate(),
+  authorizeAdmin(),
+  updateHelpRequestStatus
+)
+router.delete(
+  '/:helpRequestId',
+  authenticate(),
+  authorizeAdmin(),
+  deleteHelpRequest
+)
 
 module.exports = router

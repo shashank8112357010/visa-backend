@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const helpSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
-    phone: { type: String, required: true },
+    phone: { type: Number, required: true },
     issueType: {
       type: String,
       enum: ['Contact Us', 'Rent Your Property', 'Franchise', 'Complaints'],
@@ -15,6 +15,6 @@ const helpSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now }
   },
   { timestamps: true }
-);
+)
 
-module.exports = mongoose.model('HelpRequest', helpSchema);
+module.exports = mongoose.model('HelpRequest', helpSchema)

@@ -66,8 +66,7 @@ exports.updateHelpRequestStatus = async (req, res) => {
 
     // Send email notification to user
     const subject = 'Your Help Request has been Resolved'
-    const message =
-      `Hello ${helpRequest.name},\n\nYour help request regarding "${helpRequest.issue}" has been successfully resolved. Thank you for reaching out to us!\n\nBest regards,\nSupport Team`
+    const message = `Hello ${helpRequest.name},\n\nYour help request regarding "${helpRequest.issue}" has been successfully resolved. Thank you for reaching out to us!\n\nBest regards,\nSupport Team`
 
     await sendMail(helpRequest.email, subject, message)
 

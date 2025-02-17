@@ -24,13 +24,13 @@ const productSchema = new mongoose.Schema(
     discount: { type: Number, default: 0 },
     custom: [
       {
-        image : String ,
-        price  : Number,
-        title  : String ,
+        image: String,
+        price: Number,
+        title: String
       }
     ],
-    cupon : {
-      field : String
+    cupon: {
+      field: String
     }
   },
   { timestamps: true }
