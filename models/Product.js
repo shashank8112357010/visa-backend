@@ -22,16 +22,14 @@ const productSchema = new mongoose.Schema(
     trending: { type: Boolean, required: true },
     inStock: { type: Boolean, default: true },
     discount: { type: Number, default: 0 },
+    isCustomized: { type: Boolean, default: false },
     custom: [
       {
-        image: String,
-        price: Number,
-        title: String
+        image: { type: String },
+        price: { type: Number },
+        title: { type: String }
       }
-    ],
-    cupon: {
-      field: String
-    }
+    ]
   },
   { timestamps: true }
 )
