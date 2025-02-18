@@ -2,7 +2,8 @@ const express = require('express')
 const {
   createNewsLetter,
   getAllNewsLetters,
-  sendNewsletterEmails
+  sendNewsletterEmails,
+  unsubscribeNewsLetter
 } = require('../controllers/newsLetterController')
 
 const router = express.Router()
@@ -15,5 +16,7 @@ router.get('/', getAllNewsLetters)
 
 // Admin route - Send email to all newsletter subscribers
 router.post('/send', sendNewsletterEmails)
+
+router.post('/unsubscribe', unsubscribeNewsLetter) // ✅ Unsubscribe API
 
 module.exports = router

@@ -14,7 +14,7 @@ exports.sendMail = async (email, subject, message) => {
 
     // Send the email
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `BedsLane-${process.env.EMAIL_USER}`,
       to: email,
       subject: subject,
       text: message
