@@ -1,19 +1,19 @@
-const express = require('express');
+const express = require('express')
 const {
   createNewsLetter,
   getAllNewsLetters,
   sendNewsletterEmails
-} = require('../controllers/newsLetterController');
+} = require('../controllers/newsLetterController')
 
-const router = express.Router();
+const router = express.Router()
 
 // Public route - Subscribe to newsletter
-router.post('/', createNewsLetter);
+router.post('/', createNewsLetter)
 
 // Admin route - Fetch all newsletter subscriptions
-router.get('/', getAllNewsLetters);
+router.get('/', getAllNewsLetters)
 
 // Admin route - Send email to all newsletter subscribers
-router.post('/send', sendNewsletterEmails);
+router.post('/send', sendNewsletterEmails)
 
-module.exports = router;
+module.exports = router

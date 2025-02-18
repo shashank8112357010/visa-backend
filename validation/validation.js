@@ -108,7 +108,15 @@ const styleSchema = Joi.object({
 
 const testimonialSchema = Joi.object({
   name: Joi.string().required(),
-  message: Joi.string().required()
+  message: Joi.string().required(),
+  rating: Joi.number().min(0).max(5).required().messages({
+    'number.min': 'Ratings must be at least 0.',
+    'number.max': 'Ratings must not exceed 5.',
+    'any.required': 'Ratings are required.'
+  }),
+  location: Joi.string().required().messages({
+    'any.required': 'Ratings are required.'
+  })
 })
 
 const blogSchema = Joi.object({
