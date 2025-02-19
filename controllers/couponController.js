@@ -52,11 +52,9 @@ exports.applyCoupon = async (req, res) => {
 
     // Check minimum purchase requirement
     if (cartTotal < coupon.minPurchase) {
-      return res
-        .status(400)
-        .json({
-          message: `Minimum purchase of ₹${coupon.minPurchase} required`
-        })
+      return res.status(400).json({
+        message: `Minimum purchase of ₹${coupon.minPurchase} required`
+      })
     }
 
     // Check if the user has already used the coupon
