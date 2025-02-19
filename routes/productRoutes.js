@@ -10,7 +10,9 @@ const {
   deleteProduct,
   updateStock,
   updateTrending,
-  editProduct
+  editProduct,
+  updateBestSeller,
+  updateNewArrival
 } = require('../controllers/productController')
 const upload = require('../common/multer')
 const router = express.Router()
@@ -44,4 +46,17 @@ router.put(
   updateTrending
 )
 
+router.put(
+  '/bestsellor/:productId',
+  authenticate(),
+  authorizeAdmin(),
+  updateBestSeller
+)
+
+router.put(
+  '/newarrival/:productId',
+  authenticate(),
+  authorizeAdmin(),
+  updateNewArrival
+)
 module.exports = router

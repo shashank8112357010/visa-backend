@@ -1,9 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const couponSchema = new mongoose.Schema(
   {
     code: { type: String, required: true, unique: true }, // Unique coupon code
-    discountType: { type: String, enum: ['percentage', 'fixed'], required: true }, // Type of discount
+    discountType: {
+      type: String,
+      enum: ['percentage', 'fixed'],
+      required: true
+    }, // Type of discount
     discountValue: { type: Number, required: true }, // Discount amount
     minPurchase: { type: Number, default: 0 }, // Minimum order value required
     maxDiscount: { type: Number, default: null }, // Max discount for percentage-based coupons
@@ -13,6 +17,6 @@ const couponSchema = new mongoose.Schema(
     usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Users who have used the coupon
   },
   { timestamps: true }
-);
+)
 
-module.exports = mongoose.model('Coupon', couponSchema);
+module.exports = mongoose.model('Coupon', couponSchema)

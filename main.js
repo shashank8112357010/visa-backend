@@ -22,7 +22,6 @@ const bannerRoutes = require('./routes/bannerRoutes.js')
 const newsletterRoutes = require('./routes/newsLetterRoutes.js')
 const couponRoutes = require('./routes/couponRoutes.js')
 
-
 const app = express()
 app.use(cors({}))
 
@@ -59,7 +58,6 @@ app.use('/furniture/api/banner', bannerRoutes) // Category and Subcategory route
 
 app.use('/furniture/api/newsletter', newsletterRoutes) // Category and Subcategory routes
 app.use('/furniture/api/promocode', couponRoutes) // Category and Subcategory routes
-
 
 // Server Setup
 const PORT = process.env.PORT || 5000
