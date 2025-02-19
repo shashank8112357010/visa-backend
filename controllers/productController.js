@@ -45,13 +45,11 @@ exports.updateCustomization = async (req, res) => {
     product.custom = [...product.custom, ...custom]
 
     await product.save()
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Customization updated successfully',
-        product
-      })
+    res.status(200).json({
+      success: true,
+      message: 'Customization updated successfully',
+      product
+    })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
@@ -78,13 +76,11 @@ exports.editProduct = async (req, res) => {
       runValidators: true
     })
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Product updated successfully',
-        updatedProduct
-      })
+    res.status(200).json({
+      success: true,
+      message: 'Product updated successfully',
+      updatedProduct
+    })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
