@@ -74,7 +74,7 @@ const loginUser = async (req, res) => {
     res.send({
       success: true,
       token,
-      user: { name: user.name, email: user.email }
+      user: { name: user.name, email: user.email , phone  : user.phone , subscribe : user.subscribe }
     })
   } catch (err) {
     res
@@ -184,7 +184,7 @@ const getUsers = async (req, res) => {
 const toggleSubscribe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-    console.log("reaching" , user);
+    console.log('reaching', user)
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' })
     }

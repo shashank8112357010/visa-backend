@@ -1,11 +1,8 @@
 const Testimonial = require('../models/Testimonial')
-const { testimonialSchema } = require('../validation/validation')
+const redis = require('../common/redis') // Assuming Redis client is set up
 
 // Create a new testimonial
 exports.createTestimonial = async (req, res) => {
-  // const { error } = testimonialSchema.validate(req.body)
-  // if (error) return res.status(400).json({ message: error.details[0].message })
-
   try {
     const testimonialData = {
       ...req.body,
@@ -14,6 +11,10 @@ exports.createTestimonial = async (req, res) => {
 
     const testimonial = new Testimonial(testimonialData)
     await testimonial.save()
+
+    // Clear cache after adding a new testimonial
+    await redis.del('testimonials')
+
     res
       .status(201)
       .json({ message: 'Testimonial added successfully', testimonial })
@@ -22,15 +23,32 @@ exports.createTestimonial = async (req, res) => {
   }
 }
 
-// Get all testimonials
+// Get all testimonials (with Redis caching)
 exports.getAllTestimonials = async (req, res) => {
   try {
+    // Check if testimonials are in cache
+    const cachedTestimonials = await redis.get('testimonials')
+
+    if (cachedTestimonials) {
+      return res.status(200).json({
+        success: true,
+        message: 'Testimonials fetched from cache',
+        data: JSON.parse(cachedTestimonials)
+      })
+    }
+
+    // If not in cache, fetch from DB
     const testimonials = await Testimonial.find()
-    if (!testimonials) {
+
+    if (!testimonials.length) {
       return res
         .status(204)
         .json({ success: true, message: 'No testimonials found', data: [] })
     }
+
+    // Store in Redis for 3 hours
+    await redis.set('testimonials', JSON.stringify(testimonials), 'EX', 10800)
+
     res.status(200).json({
       success: true,
       message: 'Testimonials fetched successfully',
@@ -46,7 +64,6 @@ exports.deleteTestimonial = async (req, res) => {
   const { testimonialId } = req.params
 
   try {
-    // Find the testimonial by ID
     const testimonial = await Testimonial.findById(testimonialId)
     if (!testimonial) {
       return res
@@ -56,6 +73,9 @@ exports.deleteTestimonial = async (req, res) => {
 
     // Delete the testimonial
     await Testimonial.findByIdAndDelete(testimonialId)
+
+    // Clear cache after deleting a testimonial
+    await redis.del('testimonials')
 
     res.status(200).json({
       success: true,

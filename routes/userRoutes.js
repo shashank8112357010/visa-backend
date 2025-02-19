@@ -29,8 +29,3 @@ router.put('/update-profile', authenticate(), updateProfile)
 router.post('/change-password', authenticate(), changePassword)
 
 module.exports = router
-
-
-
-
-

@@ -1,5 +1,7 @@
 const Cart = require('../models/Cart')
 require('dotenv').config()
+const Redis = require('ioredis')
+const redis = new Redis()
 
 // Add a product to the cart or increase its quantity
 exports.addToCart = async (req, res) => {
@@ -115,6 +117,10 @@ exports.getCart = async (req, res) => {
   const userId = req.user.id // Extract userId from token
 
   try {
+    const cachedCart = await redis.get(`cart:${userId}`)
+    if (cachedCart)
+      return res.json({ success: true, cart: JSON.parse(cachedCart) })
+
     const cart = await Cart.findOne({ user: userId }).populate({
       path: 'items.product',
       select: 'name description price images'
@@ -124,7 +130,9 @@ exports.getCart = async (req, res) => {
       return res.status(404).json({ error: 'Cart not found' })
     }
 
-    res.status(200).json({ cart })
+    if (cart) redis.set(`cart:${userId}`, JSON.stringify(cart), 'EX', 300) // Cache for 5 mins
+
+    res.status(200).json({ success: true, cart })
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch cart' })
   }
