@@ -20,7 +20,9 @@ const createBanner = async (req, res) => {
     // Clear cached banners
     await redis.del(BANNER_CACHE_KEY)
 
-    res.status(201).json({ message: 'Banner created successfully', banner: newBanner })
+    res
+      .status(201)
+      .json({ message: 'Banner created successfully', banner: newBanner })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

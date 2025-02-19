@@ -21,7 +21,9 @@ exports.createBlog = async (req, res) => {
     // Clear cached blogs
     await redis.del(BLOG_CACHE_KEY)
 
-    res.status(201).json({ success: true, message: 'Blog added successfully', blog })
+    res
+      .status(201)
+      .json({ success: true, message: 'Blog added successfully', blog })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -37,12 +39,20 @@ exports.getAllBlogs = async (req, res) => {
 
     const blogs = await Blog.find({})
     if (!blogs || blogs.length === 0) {
-      return res.status(204).json({ success: true, message: 'No blogs found', data: [] })
+      return res
+        .status(204)
+        .json({ success: true, message: 'No blogs found', data: [] })
     }
 
     await redis.set(BLOG_CACHE_KEY, JSON.stringify(blogs), 'EX', 86400) // Cache for 24 hours
 
-    res.status(200).json({ success: true, message: 'Blogs fetched successfully', data: blogs })
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: 'Blogs fetched successfully',
+        data: blogs
+      })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -56,7 +66,9 @@ exports.getBlogById = async (req, res) => {
     if (!blog) {
       return res.status(404).json({ success: false, message: 'Blog not found' })
     }
-    res.status(200).json({ success: true, message: 'Blog fetched successfully', data: blog })
+    res
+      .status(200)
+      .json({ success: true, message: 'Blog fetched successfully', data: blog })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -74,7 +86,9 @@ exports.deleteBlog = async (req, res) => {
     // Clear cached blogs
     await redis.del(BLOG_CACHE_KEY)
 
-    res.status(200).json({ success: true, message: 'Blog deleted successfully' })
+    res
+      .status(200)
+      .json({ success: true, message: 'Blog deleted successfully' })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
