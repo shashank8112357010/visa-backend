@@ -4,7 +4,6 @@ const redis = require('../common/redis') // Import Redis from common
 
 const BLOG_CACHE_KEY = 'blogs' // Cache key for blogs
 
-
 // Create a new blog
 exports.createBlog = async (req, res) => {
   const { error } = blogSchema.validate(req.body)

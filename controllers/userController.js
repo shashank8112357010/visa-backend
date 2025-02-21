@@ -158,28 +158,28 @@ const getUsers = async (req, res) => {
 // Toggle Subscription Status
 const toggleSubscribe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id)
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: 'User not found' })
     }
 
     // Toggle the boolean value
-    user.subscribe = !user.subscribe;
-    await user.save();
+    user.subscribe = !user.subscribe
+    await user.save()
 
     res.json({
       success: true,
-      message: "Subscription status updated",
-      subscribe: user.subscribe,
-    });
+      message: 'Subscription status updated',
+      subscribe: user.subscribe
+    })
   } catch (err) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: err.message,
-    });
+      message: 'Server error',
+      error: err.message
+    })
   }
-};
+}
 
 // Update Profile
 const updateProfile = async (req, res) => {
