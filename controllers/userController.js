@@ -135,13 +135,11 @@ const resetPassword = async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully' })
   } catch (err) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: 'Invalid or expired token',
-        error: err.message
-      })
+    res.status(400).json({
+      success: false,
+      message: 'Invalid or expired token',
+      error: err.message
+    })
   }
 }
 
@@ -160,24 +158,28 @@ const getUsers = async (req, res) => {
 // Toggle Subscription Status
 const toggleSubscribe = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $bit: { subscribe: { xor: 1 } } },
-      { new: true }
-    )
-    if (!user)
-      return res.status(404).json({ success: false, message: 'User not found' })
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Toggle the boolean value
+    user.subscribe = !user.subscribe;
+    await user.save();
+
     res.json({
       success: true,
-      message: `Subscription status updated`,
-      subscribe: user.subscribe
-    })
+      message: "Subscription status updated",
+      subscribe: user.subscribe,
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, message: 'Server error', error: err.message })
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
-}
+};
 
 // Update Profile
 const updateProfile = async (req, res) => {

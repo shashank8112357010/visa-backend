@@ -4,6 +4,7 @@ const redis = require('../common/redis') // Import Redis from common
 
 const BLOG_CACHE_KEY = 'blogs' // Cache key for blogs
 
+
 // Create a new blog
 exports.createBlog = async (req, res) => {
   const { error } = blogSchema.validate(req.body)
@@ -28,7 +29,6 @@ exports.createBlog = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
-
 // Get all blogs (with caching)
 exports.getAllBlogs = async (req, res) => {
   try {
@@ -46,18 +46,15 @@ exports.getAllBlogs = async (req, res) => {
 
     await redis.set(BLOG_CACHE_KEY, JSON.stringify(blogs), 'EX', 86400) // Cache for 24 hours
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Blogs fetched successfully',
-        data: blogs
-      })
+    res.status(200).json({
+      success: true,
+      message: 'Blogs fetched successfully',
+      data: blogs
+    })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 }
-
 // Get a single blog by ID
 exports.getBlogById = async (req, res) => {
   const { id } = req.params
@@ -73,7 +70,6 @@ exports.getBlogById = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
-
 // Delete a blog
 exports.deleteBlog = async (req, res) => {
   const { id } = req.params
