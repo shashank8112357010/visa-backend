@@ -18,7 +18,7 @@ exports.authenticate = () => (req, res, next) => {
       .json({ message: 'Access denied. Invalid token format.' })
   }
 
-  console.log(token);
+  console.log(token)
   try {
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)

@@ -17,8 +17,8 @@ const productSchema = new mongoose.Schema(
       ref: 'Subcategory',
       required: true
     },
-    newarrival: { type: String, default: true },
-    bestsellor: { type: String, default: true },
+    newarrival: { type: Boolean, default: true },
+    bestsellor: { type: Boolean, default: true },
     trending: { type: Boolean, default: true },
     inStock: { type: Boolean, default: true },
     discount: { type: Number, default: 0 },
