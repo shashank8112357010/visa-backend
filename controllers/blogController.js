@@ -12,7 +12,7 @@ exports.createBlog = async (req, res) => {
   try {
     const blogData = {
       ...req.body,
-      image: `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}`
+      image: `${process.env.BACKEND_URL}/visa_uploads/${req.file.filename}`
     }
 
     const blog = new Blog(blogData)

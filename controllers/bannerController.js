@@ -13,7 +13,7 @@ const createBanner = async (req, res) => {
     }
 
     const newBanner = new Banner({
-      image: `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}`
+      image: `${process.env.BACKEND_URL}/visa_uploads/${req.file.filename}`
     })
     await newBanner.save()
 
@@ -57,7 +57,7 @@ const deleteBanner = async (req, res) => {
     if (banner.image) {
       const imagePath = path.join(
         __dirname,
-        `../furniture_uploads/${banner.image.split('/furniture_uploads/')[1]}`
+        `../visa_uploads/${banner.image.split('/visa_uploads/')[1]}`
       )
 
       if (fs.existsSync(imagePath)) {

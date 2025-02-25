@@ -6,7 +6,7 @@ exports.createTestimonial = async (req, res) => {
   try {
     const testimonialData = {
       ...req.body,
-      image: `${process.env.BACKEND_URL}/furniture_uploads/${req.file.filename}` // Store the image path in the database
+      image: `${process.env.BACKEND_URL}/visa_uploads/${req.file.filename}` // Store the image path in the database
     }
 
     const testimonial = new Testimonial(testimonialData)
