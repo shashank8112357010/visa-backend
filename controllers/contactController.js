@@ -5,8 +5,8 @@ const Contact = require('../models/Contact')
 // @access Public
 exports.createContact = async (req, res) => {
   try {
-    const { name, email, message, phone } = req.body
-    const contact = new Contact({ name, email, phone, message })
+    const { name, email, message, phone, subject } = req.body
+    const contact = new Contact({ name, email, phone, message, subject })
     await contact.save()
     res
       .status(201)
@@ -21,7 +21,6 @@ exports.createContact = async (req, res) => {
 // @access Admin
 exports.getAllContacts = async (req, res) => {
   try {
-    console.log('start')
     const contacts = await Contact.find()
     res.status(200).json(contacts)
   } catch (error) {

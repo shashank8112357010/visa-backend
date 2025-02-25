@@ -19,10 +19,6 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
       .sort({ updatedAt: -1 })
       .select('updatedAt')
 
-
-
-
-
     const testimonialCount = await Testimonial.countDocuments()
     const testimonialLastUpdated = await Testimonial.findOne()
       .sort({ updatedAt: -1 })
@@ -33,10 +29,6 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
       .sort({ updatedAt: -1 })
       .select('updatedAt')
 
-
-
-
-
     // Return the counts and last updated timestamps as a JSON response
     return res.status(200).json({
       success: true,
@@ -45,10 +37,6 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
           count: blogCount,
           lastUpdated: blogLastUpdated ? blogLastUpdated.updatedAt : null
         },
-      
-
-   
-  
 
         testimonial: {
           count: testimonialCount,
@@ -59,9 +47,7 @@ router.get('/count', authenticate(), authorizeAdmin(), async (req, res) => {
         user: {
           count: userCount,
           lastUpdated: userLastUpdated ? userLastUpdated.updatedAt : null
-        },
-      
-   
+        }
       }
     })
   } catch (error) {
