@@ -27,7 +27,7 @@ mongoose
   .then(() => console.log('Data Base Connected'))
   .catch((err) => console.error('DB Connection Error:', err))
 
-app.get('/visa/test', (req, res) => res.send('Server is up for visa plywood'))
+app.get('/visa/test', (req, res) => res.send('Server is up for visa application'))
 
 // Routes
 app.use('/visa/api/users', userRoutes) // User routes
