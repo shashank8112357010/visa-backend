@@ -2,9 +2,11 @@ const multer = require('multer')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 
-let storage = multer.diskStorage({
-  destination: './visa_uploads',
-  filename: function (req, file, cb) {
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './visa_uploads')
+  },
+  filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`
     cb(null, file.fieldname + '-' + uniqueSuffix)
   }
@@ -19,4 +21,6 @@ const fileFilter = (req, file, cb) => {
   }
 }
 
-module.exports = multer({ storage, fileFilter })
+const upload = multer({ storage, fileFilter })
+
+module.exports = upload

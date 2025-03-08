@@ -12,6 +12,7 @@ const blogRoutes = require('./routes/blogRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes.js')
 const bannerRoutes = require('./routes/bannerRoutes.js')
 const contactRoutes = require('./routes/contactRoutes.js')
+const visaRoutes = require('./routes/visaRoutes.js')
 
 const app = express()
 app.use(cors({}))
@@ -39,6 +40,7 @@ app.use('/visa/api/blogs', blogRoutes) // Blog routes
 app.use('/visa/api/dashboard', dashboardRoutes) // Combination routes
 app.use('/visa/api/banner', bannerRoutes) // Category and Subcategory routes
 app.use('/visa/api/contact', contactRoutes) // Category and Subcategory routes
+app.use('/visa/api/visa', visaRoutes) // Category and Subcategory routes
 
 // Server Setup
 const PORT = process.env.PORT || 5000
